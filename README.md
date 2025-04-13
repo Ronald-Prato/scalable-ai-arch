@@ -38,53 +38,45 @@ The purpose is to compare response times and scalability between synchronous pro
 
 #### Main Application (.env.local)
 
+```
 # OpenAI API key for GPT integration
-
 OPENAI_API_KEY="your_openai_api_key_here"
 
 # QStash token for message queue
-
 QSTASH_TOKEN="your_qstash_token_here"
 
 # QStash signing keys for verification
-
 QSTASH_CURRENT_SIGNING_KEY="your_current_signing_key_here"
 QSTASH_NEXT_SIGNING_KEY="your_next_signing_key_here"
 
 # Database connection (with connection pooling for production)
-
 DATABASE_URL="postgresql://username:password@host:port/database?pgbouncer=true"
 
 # Direct database connection (for migrations)
-
 DIRECT_URL="postgresql://username:password@host:port/database"
-
 ```
 
 #### Processing Server (server/.env)
 
 ```
-
 PORT=3001
 OPENAI_API_KEY="your_openai_api_key_here"
 
 # QStash verification keys
-
 QSTASH_CURRENT_SIGNING_KEY="your_current_signing_key_here"
 QSTASH_NEXT_SIGNING_KEY="your_next_signing_key_here"
 
 # Database connection
-
 DATABASE_URL="postgresql://username:password@host:port/database?pgbouncer=true"
-
-````
+```
 
 ### Running the Application
 
 1. Install dependencies:
+
    ```bash
    pnpm install
-````
+   ```
 
 2. Run database migrations:
 
