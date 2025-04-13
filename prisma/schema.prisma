@@ -1,0 +1,34 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+enum SummaryStatus {
+  PENDING
+  GENERATED
+  ERROR
+}
+
+// Define your models here
+model Summary {
+  id          String        @id @default(cuid())
+  text        String
+  summary     String
+  status      SummaryStatus @default(PENDING)
+  createdAt   DateTime      @default(now())
+  generatedAt DateTime?
+  updatedAt   DateTime      @updatedAt
+}
+
+// You can add more models as needed

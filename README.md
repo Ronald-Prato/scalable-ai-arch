@@ -1,36 +1,176 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Text Summarization App with QStash
+
+This application demonstrates two approaches to text summarization using OpenAI:
+
+1. **Direct Client-Server Approach**: The client sends text directly to the API and waits for the response.
+2. **Queue-Based Processing**: The client creates a record and sends the ID to QStash, which forwards it to a processing server that handles the OpenAI request and updates the database.
+
+The purpose is to compare response times and scalability between synchronous processing and asynchronous queue-based processing.
+
+## Architecture
+
+![Architecture Diagram](https://via.placeholder.com/800x400?text=Architecture+Diagram)
+
+- **Frontend**: Next.js application with text input interface
+- **Backend**: Express server for processing summaries
+- **Queue**: QStash for message passing
+- **Database**: PostgreSQL (via Supabase)
+- **AI**: OpenAI API for text summarization
 
 ## Getting Started
 
-First, run the development server:
+### Prerequisites
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+- Node.js 16+
+- PostgreSQL database (Supabase recommended)
+- OpenAI API key
+- QStash account (Upstash)
+
+### Environment Setup
+
+1. Clone the repository
+2. Copy the environment files:
+   ```bash
+   cp .env.example .env.local
+   cp server/.env.example server/.env
+   ```
+3. Fill in the required environment variables:
+
+#### Main Application (.env.local)
+
+# OpenAI API key for GPT integration
+
+OPENAI_API_KEY="your_openai_api_key_here"
+
+# QStash token for message queue
+
+QSTASH_TOKEN="your_qstash_token_here"
+
+# QStash signing keys for verification
+
+QSTASH_CURRENT_SIGNING_KEY="your_current_signing_key_here"
+QSTASH_NEXT_SIGNING_KEY="your_next_signing_key_here"
+
+# Database connection (with connection pooling for production)
+
+DATABASE_URL="postgresql://username:password@host:port/database?pgbouncer=true"
+
+# Direct database connection (for migrations)
+
+DIRECT_URL="postgresql://username:password@host:port/database"
+
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+#### Processing Server (server/.env)
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+PORT=3001
+OPENAI_API_KEY="your_openai_api_key_here"
 
-## Learn More
+# QStash verification keys
 
-To learn more about Next.js, take a look at the following resources:
+QSTASH_CURRENT_SIGNING_KEY="your_current_signing_key_here"
+QSTASH_NEXT_SIGNING_KEY="your_next_signing_key_here"
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+# Database connection
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+DATABASE_URL="postgresql://username:password@host:port/database?pgbouncer=true"
 
-## Deploy on Vercel
+````
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+### Running the Application
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+1. Install dependencies:
+   ```bash
+   pnpm install
+````
+
+2. Run database migrations:
+
+   ```bash
+   pnpm prisma migrate dev
+   ```
+
+3. Start the Next.js application:
+
+   ```bash
+   pnpm dev
+   ```
+
+4. Start the processing server:
+   ```bash
+   cd server
+   pnpm install
+   pnpm start
+   ```
+
+## Processing Server (server/index.js)
+
+The processing server handles asynchronous summary generation through QStash messages:
+
+### Endpoints
+
+- `GET /`: Health check endpoint
+- `GET /api/summaries`: Retrieve all summaries
+- `GET /api/summaries/:id`: Get a specific summary by ID
+- `POST /api/webhook`: QStash webhook for general messages
+- `POST /api/process-summary`: QStash webhook for processing summary requests
+
+### How It Works
+
+1. When a user submits text for summarization via the queue method:
+
+   - The client creates a database record with the original text
+   - The client sends the record ID to QStash
+   - QStash forwards the message to the processing server
+
+2. The processing server:
+
+   - Verifies the QStash signature
+   - Retrieves the text from the database using the provided ID
+   - Calls OpenAI to generate the summary
+   - Updates the database record with the summary
+   - Logs the completion
+
+3. Meanwhile, the client can:
+   - Show a loading state
+   - Poll for updates
+   - Display the summary when ready
+
+## Performance Comparison
+
+The application includes a performance dashboard that compares:
+
+- Response time for direct API calls
+- End-to-end time for queue-based processing
+- Server load under different concurrency levels
+- Cost implications of both approaches
+
+## Technologies Used
+
+- **Next.js**: Frontend framework
+- **Express**: Backend server
+- **Prisma**: Database ORM
+- **PostgreSQL**: Database
+- **QStash**: Message queue
+- **OpenAI API**: AI text summarization
+- **ShadCN UI**: Component library
+
+## Development
+
+### Adding UI Components
+
+```bash
+pnpm dlx shadcn@latest add [component-name]
+```
+
+### Database Schema Updates
+
+```bash
+pnpm prisma migrate dev --name [migration-name]
+```
+
+## License
+
+[MIT](LICENSE)
